@@ -3,3 +3,4 @@ textual
 dotenv
 typer>=0.9.0
 aiohttp
+bcrypt
