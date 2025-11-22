@@ -6,28 +6,41 @@ async def getDB():
     Connects to the PostgreSQL Database
 
     Returns:
-        _type_: _description_
+        Connection: asyncpg connection object
     """
     return await asyncpg.connect(DB_URL)
 
 async def init():
     conn = await getDB()
+    
     await conn.execute("""
     CREATE TABLE IF NOT EXISTS teams (
         team_number INT PRIMARY KEY,
         team_name TEXT NOT NULL,
         location TEXT,
         website TEXT,
-        passcode TEXT NOT NULL,
-        creator TEXT NOT NULL
+        passcode TEXT NOT NULL
     );
     """)
+    
     await conn.execute("""
     CREATE TABLE IF NOT EXISTS team_members (
         id SERIAL PRIMARY KEY,
         team_number INT REFERENCES teams(team_number),
         username TEXT NOT NULL,
-        status TEXT DEFAULT 'pending'
+        UNIQUE(team_number, username)
     );
     """)
+    
+    await conn.execute("""
+    CREATE TABLE IF NOT EXISTS join_requests (
+        id SERIAL PRIMARY KEY,
+        team_number INT REFERENCES teams(team_number),
+        username TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+    
+    print("Database initialized successfully")
     await conn.close()

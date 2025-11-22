@@ -5,9 +5,11 @@ from commands.approve import Approve
 from commands.create import CreateTeam
 from commands.join import JoinTeam
 from commands.pending import Pending
+from commands.init import Init
 
 App = typer.Typer()
 
+App.add_typer(Init().App, name="init")
 App.add_typer(Stats().App, name="stats")
 App.add_typer(Pending().App, name="pending")
 App.add_typer(JoinTeam().App, name="join-team")
