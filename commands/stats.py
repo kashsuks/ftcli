@@ -3,13 +3,19 @@ import asyncio
 
 from utils.ftcScout import getTeam
 from db import getDB
+from auth import getUser
 
 class Stats:
     def __init__(self):
         self.App = typer.Typer()
         
         @self.App.command()
-        def Show(username: str):
+        def show(username: str):
+            username = getUser()
+            if not username:
+                print("You must be logged in!")
+                return
+            
             asyncio.run(self._show(username))
     
     async def _show(self, username: str):

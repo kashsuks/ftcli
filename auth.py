@@ -27,7 +27,7 @@ async def verify(password: str, hashed: str) -> bool:
     Returns:
         bool: Whether password matches hash or not
     """
-    return bcrypt.chechpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 async def createUser(username: str, password: str):
     """Create a new user account

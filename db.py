@@ -14,9 +14,10 @@ async def init():
     conn = await getDB()
     
     await conn.execute("""
-        username TEXT PRIMARY KEY,
-        password_hash TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     """)
     
@@ -26,7 +27,7 @@ async def init():
         team_name TEXT NOT NULL,
         location TEXT,
         website TEXT,
-        passcode TEXT NOT NULL
+        passcode TEXT NOT NULL,
         creator TEXT REFERENCES users(username)
     );
     """)
