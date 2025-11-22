@@ -1,18 +1,19 @@
-from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer
-from textual.cli import make_cli
+import typer
 
-import commands.create_team
-import commands.join_team
+from commands.stats import Stats
+from commands.approve import Approve
+from commands.create import CreateTeam
+from commands.join import JoinTeam
+from commands.pending import Pending
 
-class FTCLI(App):
-    CSS_PATH = None
-    
-    def compose(self) -> ComposeResult:
-        yield Header()
-        yield Footer()
+App = typer.Typer()
+
+App.add_typer(Stats().App, name="stats")
+App.add_typer(Pending().App, name="pending")
+App.add_typer(JoinTeam().App, name="join-team")
+App.add_typer(Approve().App, name="approve")
+App.add_typer(CreateTeam().App, name="create-team")
         
-cli = make_cli(FTCLI)
 
 if __name__ == "__main__":
-    cli()
+    App()

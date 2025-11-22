@@ -1,5 +1,5 @@
 import asyncpg
-from config import DB_URL
+from utils.config import DB_URL
 
 async def getDB():
     """

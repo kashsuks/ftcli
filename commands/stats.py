@@ -1,0 +1,40 @@
+import typer
+import asyncio
+
+from utils.ftcScout import getTeam
+from db import getDB
+
+class Stats:
+    def __init__(self):
+        self.App = typer.Typer()
+        
+        @self.App.command()
+        def Show(username: str):
+            asyncio.run(self._show(username))
+    
+    async def _show(self, username: str):
+        conn = await getDB()
+        
+        team = await conn.fetchrow("""
+            SELECT t.team_number, t.team_name, t.location, t.website
+            FROM teams t
+            JOIN team_members m ON t.team_number = m.team_number
+            WHERE m.username=$1
+        """, username)
+        
+        if not team:
+            print("You are not in a team.")
+            await conn.close()
+            return
+    
+        remote = await getTeam(team["team_number"])
+        
+        print("\n=== Team Info ===")
+        print(f"Team number: {team['team_number']}")
+        print(f"Team name: {team['team_name']}")
+        print(f"Location: {team['location']}")
+        print(f"Website {team['website']}")
+        print("\n=== FTCScout Data ===")
+        print(remote)
+        
+        await conn.close()
