@@ -1,4 +1,5 @@
 import typer
+import sys
 
 from auth import getUser
 
@@ -12,16 +13,6 @@ from commands.auth import Auth
 
 App = typer.Typer()
 
-def checkAuth():
-    """
-    Check if the user is logged in before running commands
-    """
-    user = getUser()
-    if not user:
-        print("You must be logged in to use this command!")
-        print("Run 'ftcli.py auth register' to create an account")
-        print("Run 'ftcli.py auth login' to login")
-
 App.add_typer(Init().App, name="init")
 App.add_typer(Auth().App, name="auth")
 App.add_typer(Stats().App, name="stats")
@@ -32,4 +23,11 @@ App.add_typer(CreateTeam().App, name="create-team")
         
 
 if __name__ == "__main__":
-    App()
+    
+    #if no arguments provided, launch TUI
+    if len(sys.argv) == 1:
+        from tui import MainApp
+        app = MainApp()
+        app.run()
+    else:
+        App()
