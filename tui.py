@@ -458,6 +458,8 @@ class MainApp(App):
                 yield Button("Create Team", id="create_team", variant="success")
             else:
                 yield Button("View Team", id="view_team", variant="primary")
+                if self.is_owner:
+                    yield Button("Manage Team", id="manage_team", variant="success")
                 yield Button("Leave Team", id="leave_team", variant="error")
             yield Button("Settings", id="settings", variant="default")
             yield Button("More", id="more", variant="default")
@@ -521,6 +523,13 @@ class MainApp(App):
             self.exit()
         finally:
             await conn.close()
+            
+    @on(Button.Pressed, "#manage_team")
+    def handle_manage_team(self):
+        """
+        Manage a team (owner only)
+        """
+        self.notify("Manage Team - Coming soon!")
     
     @on(Button.Pressed, "#settings")
     def handle_settings(self):
