@@ -447,23 +447,32 @@ class MainApp(App):
         
         await conn.close()
         self.update_ui()
-    
+        
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static(id="welcome")
         yield Static(id="updates")
-        with Vertical(id="menu_container"):
-            if not self.team_data:
-                yield Button("Join Team", id="join_team", variant="primary")
-                yield Button("Create Team", id="create_team", variant="success")
-            else:
-                yield Button("View Team", id="view_team", variant="primary")
-                if self.is_owner:
-                    yield Button("Manage Team", id="manage_team", variant="success")
-                yield Button("Leave Team", id="leave_team", variant="error")
-            yield Button("Settings", id="settings", variant="default")
-            yield Button("More", id="more", variant="default")
+        yield Vertical(id="menu_container") # make an empty container
         yield Footer()
+    
+    def rebuild_menu(self):
+        """
+        Rebuild the menu buttons based on the current state
+        """
+        
+        menu = self.query_one("#menu_container", Vertical)
+        menu.remove_children() # clear all the existing buttons
+        if not self.team_data:
+            menu.mount(Button("Join Team", id="join_team", variant="primary"))
+            menu.mount(Button("Create Team", id="create_team", variant="success"))
+        else:
+            menu.mount(Button("View Team", id="view_team", variant="primary"))
+            if self.is_owner:
+                menu.mount(Button("Manage Team", id="manage_team", variant="success"))
+            menu.mount(Button("Leave Team", id="leave_team", variant="error"))
+            
+        menu.mount(Button("Settings", id="settings", variant="default"))
+        menu.mount(Button("More", id="more", variant="default"))
     
     def update_ui(self):
         """Update UI elements"""
@@ -483,6 +492,10 @@ class MainApp(App):
                 updates.update(content)
             else:
                 updates.update("")
+                
+            # rebuild the menu along with the proper buttins
+            self.rebuild_menu()
+            
         except Exception:
             pass  # Widgets not ready yet
     
