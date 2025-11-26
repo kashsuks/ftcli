@@ -473,6 +473,10 @@ class MainApp(App):
             
         menu.mount(Button("Settings", id="settings", variant="default"))
         menu.mount(Button("More", id="more", variant="default"))
+        
+        buttons = menu.query(Button)
+        if buttons:
+            buttons.first().focus()
     
     def update_ui(self):
         """Update UI elements"""
