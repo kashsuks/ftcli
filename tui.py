@@ -1,12 +1,80 @@
 from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, Horizontal
+from textual.containers import Container, Vertical, Horizontal, ScrollableContainer
 from textual.widgets import Header, Footer, Button, Static, Label, Input
-from textual.screen import Screen
+from textual.screen import Screen, ModalScreen
 from textual import on
+
 import asyncio
 import webbrowser
+
 from auth import getUser, authenticate, setUser, clear
 from db import getDB
+
+class ConfirmKickScreen(ModalScreen):
+    """Confirmation dialog for kicking a member"""
+    
+    CSS = """
+    ConfirmKickScreen {
+        align: center middle;
+    }
+    
+    #confirm_container {
+        width: 50;
+        height: auto;
+        border: solid $error;
+        padding: 2;
+        background: $surface;
+    }
+    
+    .title {
+        text-align: center;
+        text-style: bold;
+        color: $error;
+        margin: 1 0;
+    }
+    
+    .message {
+        text-align: center;
+        margin: 1 0;
+    }
+    
+    Button {
+        width: 50%;
+        margin: 1;
+    }
+    """
+    
+    def __init__(self, username: str, team_number: int):
+        super().__init__()
+        self.username = username
+        self.team_number = team_number
+    
+    def compose(self) -> ComposeResult:
+        with Container(id="confirm_container"):
+            yield Label("Confirm Kick", classes="title")
+            yield Label(f"Are you sure you want to kick {self.username} from the team?", classes="message")
+            with Horizontal():
+                yield Button("Confirm", variant="error", id="confirm_btn")
+                yield Button("Cancel", variant="default", id="cancel_btn")
+    
+    @on(Button.Pressed, "#confirm_btn")
+    async def confirm_kick(self):
+        conn = await getDB()
+        try:
+            await conn.execute("""
+                DELETE FROM team_members
+                WHERE team_number=$1 AND username=$2
+            """, self.team_number, self.username)
+            self.dismiss(True)
+        except Exception as e:
+            self.app.notify(f"Error: {str(e)}")
+            self.dismiss(False)
+        finally:
+            await conn.close()
+    
+    @on(Button.Pressed, "#cancel_btn")
+    def cancel(self):
+        self.dismiss(False)
 
 class LoginScreen(Screen):
     """Login screen"""
@@ -75,7 +143,7 @@ class LoginScreen(Screen):
             await self.app.load_data()
             self.app.pop_screen()
         else:
-            error.update("Invalid username or password")
+            error.update("Invalid username or password!")
             password_input.value = ""
 
 class CreateTeamScreen(Screen):
@@ -297,7 +365,7 @@ class ViewTeamScreen(Screen):
     }
     
     #view_container {
-        width: 70;
+        width: 80;
         height: auto;
         border: solid $primary;
         padding: 2;
@@ -311,6 +379,12 @@ class ViewTeamScreen(Screen):
         margin: 1 0;
     }
     
+    .section-title {
+        text-style: bold;
+        color: $accent;
+        margin: 2 0 1 0;
+    }
+    
     .info {
         margin: 1 0;
     }
@@ -320,41 +394,204 @@ class ViewTeamScreen(Screen):
         color: $accent;
     }
     
-    Button {
-        width: 30;
+    .member-card {
+        border: solid $primary;
+        padding: 1;
         margin: 1 0;
+        background: $panel;
+    }
+    
+    .request-card {
+        border: solid $warning;
+        padding: 1;
+        margin: 1 0;
+        background: $panel;
+    }
+    
+    Button {
+        margin: 1;
+    }
+    
+    .action-buttons {
+        width: auto;
+    }
+    
+    .request-info {
+        width: 1fr;
     }
     """
     
-    def __init__(self, team_data):
-        """Initialize
-        
-        Args:
-            team_data: Team data
-        """
+    def __init__(self, team_data, members, pending_requests):
         super().__init__()
         self.team_data = team_data
+        self.members = members
+        self.pending_requests = pending_requests
     
     def compose(self) -> ComposeResult:
-        with Container(id="view_container"):
+        with ScrollableContainer(id="view_container"):
             yield Label("Team Information", classes="title")
             yield Label(f"[bold cyan]Team Number:[/] {self.team_data['team_number']}", classes="info")
             yield Label(f"[bold cyan]Team Name:[/] {self.team_data['team_name']}", classes="info")
             yield Label(f"[bold cyan]Location:[/] {self.team_data['location']}", classes="info")
             yield Label(f"[bold cyan]Website:[/] {self.team_data['website']}", classes="info")
+            
+            yield Label("Team Members", classes="section-title")
+            for member in self.members:
+                role = "Creator" if member['username'] == self.team_data['creator'] else "Member"
+                with Container(classes="member-card"):
+                    yield Label(f"👤 {member['username']} - {role}")
+            
+            if self.pending_requests:
+                yield Label("Pending Join Requests", classes="section-title")
+                for req in self.pending_requests:
+                    with Horizontal(classes="request-card"):
+                        yield Label(f"📨 {req['username']} requested to join", classes="request-info")
+                        with Horizontal(classes="action-buttons"):
+                            yield Button("✓", variant="success", id=f"approve_{req['id']}")
+                            yield Button("✗", variant="error", id=f"reject_{req['id']}")
+            
             with Horizontal():
                 yield Button("Open Website", variant="primary", id="open_web")
                 yield Button("Close", variant="default", id="close_btn")
     
-    @on(Button.Pressed, "#open_web")
-    def open_website(self):
-        """Opens the website"""
-        webbrowser.open(self.team_data['website'])
+    @on(Button.Pressed)
+    async def handle_button(self, event: Button.Pressed):
+        button_id = event.button.id
+        
+        if button_id == "open_web":
+            webbrowser.open(self.team_data['website'])
+        elif button_id == "close_btn":
+            self.app.pop_screen()
+        elif button_id.startswith("approve_"):
+            request_id = int(button_id.split("_")[1])
+            await self.handle_request(request_id, True)
+        elif button_id.startswith("reject_"):
+            request_id = int(button_id.split("_")[1])
+            await self.handle_request(request_id, False)
     
-    @on(Button.Pressed, "#close_btn")
-    def close(self):
-        """Closes the screen"""
-        self.app.pop_screen()
+    async def handle_request(self, request_id: int, approved: bool):
+        conn = await getDB()
+        try:
+            req = await conn.fetchrow(
+                "SELECT * FROM join_requests WHERE id=$1", request_id
+            )
+            
+            if not req:
+                self.app.notify("Request not found")
+                return
+            
+            if approved:
+                await conn.execute("""
+                    INSERT INTO team_members (team_number, username)
+                    VALUES ($1, $2)
+                """, req["team_number"], req["username"])
+                
+                await conn.execute("""
+                    UPDATE join_requests SET status='approved' WHERE id=$1
+                """, request_id)
+                
+                self.app.notify(f"Approved {req['username']}'s request")
+            else:
+                await conn.execute("""
+                    UPDATE join_requests SET status='rejected' WHERE id=$1
+                """, request_id)
+                
+                self.app.notify(f"Rejected {req['username']}'s request")
+            
+            await self.app.load_data()
+            self.app.pop_screen()
+        except Exception as e:
+            self.app.notify(f"Error: {str(e)}")
+        finally:
+            await conn.close()
+
+class ManageTeamScreen(Screen):
+    """Manage team screen (owner only)"""
+    
+    CSS = """
+    ManageTeamScreen {
+        align: center middle;
+    }
+    
+    #manage_container {
+        width: 80;
+        height: auto;
+        border: solid $primary;
+        padding: 2;
+        background: $surface;
+    }
+    
+    .title {
+        text-align: center;
+        text-style: bold;
+        color: $accent;
+        margin: 1 0;
+    }
+    
+    .section-title {
+        text-style: bold;
+        color: $accent;
+        margin: 2 0 1 0;
+    }
+    
+    .info {
+        margin: 1 0;
+    }
+    
+    .member-card {
+        border: solid $primary;
+        padding: 1;
+        margin: 1 0;
+        background: $panel;
+    }
+    
+    .member-info {
+        width: 1fr;
+    }
+    
+    Button {
+        margin: 1;
+    }
+    """
+    
+    def __init__(self, team_data, members):
+        super().__init__()
+        self.team_data = team_data
+        self.members = members
+    
+    def compose(self) -> ComposeResult:
+        with ScrollableContainer(id="manage_container"):
+            yield Label("Manage Team", classes="title")
+            yield Label(f"[bold cyan]Team Number:[/] {self.team_data['team_number']}", classes="info")
+            yield Label(f"[bold cyan]Team Name:[/] {self.team_data['team_name']}", classes="info")
+            yield Label(f"[bold cyan]Location:[/] {self.team_data['location']}", classes="info")
+            yield Label(f"[bold cyan]Website:[/] {self.team_data['website']}", classes="info")
+            
+            yield Label("Team Members", classes="section-title")
+            for member in self.members:
+                role = "Creator" if member['username'] == self.team_data['creator'] else "Member"
+                with Horizontal(classes="member-card"):
+                    yield Label(f"👤 {member['username']} - {role}", classes="member-info")
+                    if member['username'] != self.team_data['creator']:
+                        yield Button("✗", variant="error", id=f"kick_{member['username']}")
+            
+            yield Button("Close", variant="default", id="close_btn")
+    
+    @on(Button.Pressed)
+    async def handle_button(self, event: Button.Pressed):
+        button_id = event.button.id
+        
+        if button_id == "close_btn":
+            self.app.pop_screen()
+        elif button_id.startswith("kick_"):
+            username = button_id.split("_", 1)[1]
+            result = await self.app.push_screen_wait(
+                ConfirmKickScreen(username, self.team_data['team_number'])
+            )
+            if result:
+                self.app.notify(f"Kicked {username} from the team")
+                await self.app.load_data()
+                self.app.pop_screen()
 
 class MainApp(App):
     """Main application"""
@@ -411,6 +648,8 @@ class MainApp(App):
         self.team_data = None
         self.is_owner = False
         self.pending_requests = []
+        self.team_members = []
+        self.team_members = []
     
     def on_mount(self) -> None:
         """Called when app is mounted"""
@@ -435,6 +674,15 @@ class MainApp(App):
             self.team_data = dict(team)
             self.is_owner = team['creator'] == self.username
             
+            # Get team members
+            # Get team members
+            members = await conn.fetch("""
+                SELECT username
+                FROM team_members
+                WHERE team_number=$1
+            """, team['team_number'])
+            self.team_members = [dict(m) for m in members]
+            
             # Get pending requests if the user is the owner
             if self.is_owner:
                 requests = await conn.fetch("""
@@ -447,12 +695,12 @@ class MainApp(App):
         
         await conn.close()
         self.update_ui()
-        
+    
     def compose(self) -> ComposeResult:
         yield Header()
         yield Static(id="welcome")
         yield Static(id="updates")
-        yield Vertical(id="menu_container") # make an empty container
+        yield Vertical(id="menu_container")
         yield Footer()
     
     def rebuild_menu(self):
@@ -461,7 +709,8 @@ class MainApp(App):
         """
         
         menu = self.query_one("#menu_container", Vertical)
-        menu.remove_children() # clear all the existing buttons
+        menu.remove_children()
+        
         if not self.team_data:
             menu.mount(Button("Join Team", id="join_team", variant="primary"))
             menu.mount(Button("Create Team", id="create_team", variant="success"))
@@ -474,6 +723,7 @@ class MainApp(App):
         menu.mount(Button("Settings", id="settings", variant="default"))
         menu.mount(Button("More", id="more", variant="default"))
         
+        # Reset focus to the first button after rebuilding
         buttons = menu.query(Button)
         if buttons:
             buttons.first().focus()
@@ -497,11 +747,11 @@ class MainApp(App):
             else:
                 updates.update("")
                 
-            # rebuild the menu along with the proper buttins
+            # rebuild the menu along with the proper buttons
             self.rebuild_menu()
             
         except Exception:
-            pass  # Widgets not ready yet
+            pass
     
     @on(Button.Pressed, "#join_team")
     async def handle_join_team(self):
@@ -517,7 +767,17 @@ class MainApp(App):
     async def handle_view_team(self):
         """Handles viewing a team and its data"""
         if self.team_data:
-            self.push_screen(ViewTeamScreen(self.team_data))
+            self.push_screen(ViewTeamScreen(
+                self.team_data, 
+                self.team_members, 
+                self.pending_requests if self.is_owner else []
+            ))
+    
+    @on(Button.Pressed, "#manage_team")
+    async def handle_manage_team(self):
+        """Manage a team (owner only)"""
+        if self.team_data and self.is_owner:
+            self.push_screen(ManageTeamScreen(self.team_data, self.team_members))
     
     @on(Button.Pressed, "#leave_team")
     async def handle_leave_team(self):
@@ -535,18 +795,12 @@ class MainApp(App):
             self.team_data = None
             self.is_owner = False
             self.pending_requests = []
+            self.team_members = []
             await self.load_data()
             self.notify("Left team successfully! Please restart.")
             self.exit()
         finally:
             await conn.close()
-            
-    @on(Button.Pressed, "#manage_team")
-    def handle_manage_team(self):
-        """
-        Manage a team (owner only)
-        """
-        self.notify("Manage Team - Coming soon!")
     
     @on(Button.Pressed, "#settings")
     def handle_settings(self):
