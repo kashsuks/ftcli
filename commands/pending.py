@@ -9,7 +9,6 @@ class Pending:
         def list(team_number: int):
             """
             Lists data about the team and number
-
             Args:
                 teamNumber (int): team number that the user is under
             """

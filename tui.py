@@ -1,17 +1,19 @@
-from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, Horizontal, ScrollableContainer
-from textual.widgets import Header, Footer, Button, Static, Label, Input
-from textual.screen import Screen, ModalScreen
-from textual import on
-
 import asyncio
 import webbrowser
 
 from auth import getUser, authenticate, setUser, clear
 from db import getDB
 
+from textual.app import App, ComposeResult
+from textual.containers import Container, Vertical, Horizontal, ScrollableContainer
+from textual.widgets import Header, Footer, Button, Static, Label, Input
+from textual.screen import Screen, ModalScreen
+from textual import on
+
 class ConfirmKickScreen(ModalScreen):
-    """Confirmation dialog for kicking a member"""
+    """
+    Confirmation dialog for kicking a member
+    """
     
     CSS = """
     ConfirmKickScreen {
@@ -25,7 +27,7 @@ class ConfirmKickScreen(ModalScreen):
         padding: 2;
         background: $surface;
     }
-    
+
     .title {
         text-align: center;
         text-style: bold;
@@ -48,7 +50,6 @@ class ConfirmKickScreen(ModalScreen):
         super().__init__()
         self.username = username
         self.team_number = team_number
-    
     def compose(self) -> ComposeResult:
         with Container(id="confirm_container"):
             yield Label("Confirm Kick", classes="title")
@@ -56,9 +57,13 @@ class ConfirmKickScreen(ModalScreen):
             with Horizontal():
                 yield Button("Confirm", variant="error", id="confirm_btn")
                 yield Button("Cancel", variant="default", id="cancel_btn")
-    
     @on(Button.Pressed, "#confirm_btn")
     async def confirm_kick(self):
+        """
+        Removes user from the databse if authorized to get kicked
+        
+        :param self: Self that can use class attributes
+        """
         conn = await getDB()
         try:
             await conn.execute("""
@@ -71,13 +76,14 @@ class ConfirmKickScreen(ModalScreen):
             self.dismiss(False)
         finally:
             await conn.close()
-    
     @on(Button.Pressed, "#cancel_btn")
     def cancel(self):
         self.dismiss(False)
 
 class LoginScreen(Screen):
-    """Login screen"""
+    """
+    Login screen
+    """
     
     CSS = """
     LoginScreen {
@@ -123,13 +129,14 @@ class LoginScreen(Screen):
             yield Input(placeholder="Password", password=True, id="password")
             yield Button("Login", variant="primary", id="login_btn")
             yield Label("", id="error_msg", classes="error")
-    
     @on(Button.Pressed, "#login_btn")
     async def login(self):
+        """
+        Logic screen that asks for the username and password
+        """
         username_input = self.query_one("#username", Input)
         password_input = self.query_one("#password", Input)
         error = self.query_one("#error_msg", Label)
-        
         username = username_input.value
         password = password_input.value
         
@@ -147,7 +154,9 @@ class LoginScreen(Screen):
             password_input.value = ""
 
 class CreateTeamScreen(Screen):
-    """Create team screen"""
+    """
+    Create team screen
+    """
     
     CSS = """
     CreateTeamScreen {
@@ -161,7 +170,6 @@ class CreateTeamScreen(Screen):
         padding: 2;
         background: $surface;
     }
-    
     Input {
         margin: 1 0;
     }
@@ -191,6 +199,15 @@ class CreateTeamScreen(Screen):
     """
     
     def compose(self) -> ComposeResult:
+        """
+        Compose method for setting up variables needed
+
+        Returns:
+            ComposeResult: Iterable widget
+
+        Yields:
+            Iterator[ComposeResult]
+        """
         with Container(id="create_container"):
             yield Label("Create New Team", classes="title")
             yield Input(placeholder="Team Number", id="team_number")
@@ -202,42 +219,40 @@ class CreateTeamScreen(Screen):
             with Horizontal():
                 yield Button("Create", variant="primary", id="create_btn")
                 yield Button("Cancel", variant="default", id="cancel_btn")
-    
     @on(Button.Pressed, "#create_btn")
     async def create(self):
+        """
+        Creates all parameters and the screen for creating a team
+        
+        :param self: Allows the usage of class attributes
+        """
         team_number = self.query_one("#team_number", Input).value
         team_name = self.query_one("#team_name", Input).value
         location = self.query_one("#location", Input).value
         website = self.query_one("#website", Input).value
         passcode = self.query_one("#passcode", Input).value
         msg = self.query_one("#msg", Label)
-        
         if not all([team_number, team_name, location, website, passcode]):
             msg.update("All fields are required!")
             msg.styles.color = "red"
             return
-        
         try:
             team_number = int(team_number)
         except ValueError:
             msg.update("Team number must be a number!")
             msg.styles.color = "red"
             return
-        
         creator = getUser()
         conn = await getDB()
-        
         try:
             await conn.execute("""
                 INSERT INTO teams (team_number, team_name, location, website, passcode, creator)
                 VALUES ($1, $2, $3, $4, $5, $6)
             """, team_number, team_name, location, website, passcode, creator)
-            
             await conn.execute("""
                 INSERT INTO team_members (team_number, username)
                 VALUES ($1, $2)
             """, team_number, creator)
-            
             msg.update("Team created successfully!")
             msg.styles.color = "green"
             await asyncio.sleep(1)
