@@ -1,16 +1,20 @@
 import typer
 import asyncio
-
-from utils.ftcScout import getTeam
 from db import getDB
 from auth import getUser
+from utils.ftcScout import getTeam
 
 class Stats:
     def __init__(self):
         self.App = typer.Typer()
-        
         @self.App.command()
         def show(username: str):
+            """
+            Used to start and get user and data
+
+            Args:
+                username (str): The username of the user (if exists)
+            """
             username = getUser()
             if not username:
                 print("You must be logged in!")
@@ -19,8 +23,10 @@ class Stats:
             asyncio.run(self._show(username))
     
     async def _show(self, username: str):
+        """
+        Private to fetch data not to be used anywhere else
+        """
         conn = await getDB()
-        
         team = await conn.fetchrow("""
             SELECT t.team_number, t.team_name, t.location, t.website
             FROM teams t
