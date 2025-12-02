@@ -1,3 +1,7 @@
+"""
+Used for fetching database url as a variable
+"""
+
 import os
 from dotenv import load_dotenv
 load_dotenv()
