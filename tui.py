@@ -1,14 +1,14 @@
-import asyncio
-import webbrowser
+import asyncio # noqa
+import webbrowser # noqa
+
+from textual.app import App, ComposeResult # noqa
+from textual.containers import Container, Vertical, Horizontal, ScrollableContainer # noqa
+from textual.widgets import Header, Footer, Button, Static, Label, Input # noqa
+from textual.screen import Screen, ModalScreen # noqa
+from textual import on # noqa
 
 from auth import get_user, authenticate, set_user, clear
 from database import get_database_connection
-
-from textual.app import App, ComposeResult
-from textual.containers import Container, Vertical, Horizontal, ScrollableContainer
-from textual.widgets import Header, Footer, Button, Static, Label, Input
-from textual.screen import Screen, ModalScreen
-from textual import on
 
 class ConfirmKickScreen(ModalScreen):
     """

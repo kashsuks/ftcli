@@ -1,6 +1,6 @@
-import asyncio
-import bcrypt
-import typer
+import asyncio # noqa
+import bcrypt # noqa
+import typer # noqa
 
 from database import get_database_connection
 

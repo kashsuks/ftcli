@@ -1,4 +1,4 @@
-import typer
+import typer # noqa
 import sys
 
 

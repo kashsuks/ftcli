@@ -1,4 +1,4 @@
-import asyncpg
+import asyncpg # noqa
 from utils.config import DB_URL
 
 async def get_database_connection():
