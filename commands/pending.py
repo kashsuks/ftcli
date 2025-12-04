@@ -3,6 +3,9 @@ import asyncio
 from database import get_database_connection
 
 class Pending:
+    """
+    
+    """
     def __init__(self):
         self.App = typer.Typer()
         @self.App.command()

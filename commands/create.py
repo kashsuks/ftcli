@@ -5,6 +5,9 @@ from database import get_database_connection
 from auth import get_user
 
 class CreateTeam:
+    """
+    Input information for team into database form TUI
+    """
     def __init__(self):
         self.App = typer.Typer()
         @self.App.command()
