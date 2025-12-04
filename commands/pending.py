@@ -1,6 +1,6 @@
 import typer
 import asyncio
-from db import getDB
+from database import get_database_connection
 
 class Pending:
     def __init__(self):
@@ -17,7 +17,7 @@ class Pending:
         """
         Private to list the data of the user team number and status
         """
-        conn = await getDB()
+        conn = await get_database_connection()
         rows = await conn.fetch("""
             SELECT id, username
             FROM join_requests

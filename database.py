@@ -1,7 +1,7 @@
 import asyncpg
 from utils.config import DB_URL
 
-async def getDB():
+async def get_database_connection():
     """
     Connects to the PostgreSQL Database
 
@@ -10,8 +10,11 @@ async def getDB():
     """
     return await asyncpg.connect(DB_URL)
 
-async def init():
-    conn = await getDB()
+async def init() -> None:
+    """
+    Initializes the database and sets up all of the tables needed in order to store all data
+    """
+    conn = await get_database_connection()
     
     await conn.execute("""
         CREATE TABLE IF NOT EXISTS users (

@@ -2,7 +2,7 @@ import asyncio
 import bcrypt
 import typer
 
-from db import getDB
+from database import get_database_connection
 
 async def hash(password: str) -> str:
     """Hashes a password using bcrypt
@@ -29,7 +29,7 @@ async def verify(password: str, hashed: str) -> bool:
     """
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
-async def createUser(username: str, password: str):
+async def create_user(username: str, password: str):
     """Create a new user account
 
     Args:
@@ -37,7 +37,7 @@ async def createUser(username: str, password: str):
         password (str): User password
     """
     
-    conn = await getDB()
+    conn = await get_database_connection()
     
     #check if the user already exists
     existing = await conn.fetchrow(
@@ -70,7 +70,7 @@ async def authenticate(username: str, password: str) -> bool:
         bool: _description_
     """
     
-    conn = await getDB()
+    conn = await get_database_connection()
     
     user = await conn.fetchrow(
         "SELECT password_hash FROM users WHERE username=$1", username
@@ -83,7 +83,7 @@ async def authenticate(username: str, password: str) -> bool:
     
     return await verify(password, user['password_hash'])
 
-def getUser() -> str:
+def get_user() -> str:
     """_summary_
 
     Returns:
@@ -96,7 +96,7 @@ def getUser() -> str:
     except FileNotFoundError:
         return None
 
-def setUser(username: str):
+def set_user(username: str):
     """_summary_
 
     Args:

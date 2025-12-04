@@ -1,10 +1,10 @@
 import typer
 import asyncio
-from auth import createUser, authenticate, setUser, clear, getUser
+from auth import create_user, authenticate, set_user, clear, get_user
 
 class Auth:
     """
-    Something
+    Class used for authorizing user for creating account and login process
     """
     def __init__(self):
         self.App = typer.Typer()
@@ -26,19 +26,18 @@ class Auth:
                 print("Password must be at least 6 characters")
                 return
             
-            asyncio.run(createUser(username, password))
+            asyncio.run(create_user(username, password))
             
         @self.App.command()
         def login():
             """
             Login to your account
             """
-            
             username = typer.prompt("Username")
             password = typer.prompt("Password", hide_input=True)
             
             if asyncio.run(authenticate(username, password)):
-                setUser(username)
+                set_user(username)
                 print(f"Successfully logged in as {username}")
             else:
                 print("Invalid username or password!")
@@ -48,7 +47,6 @@ class Auth:
             """
             Logout from your account
             """
-            
             clear()
             print("Logged out successfully")
             
@@ -57,8 +55,7 @@ class Auth:
             """
             Show current logged in user
             """
-            
-            user = getUser()
+            user = get_user()
             if user:
                 print(f"Logged in as: {user}")
             else:

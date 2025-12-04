@@ -1,8 +1,8 @@
 import asyncio
 import webbrowser
 
-from auth import getUser, authenticate, setUser, clear
-from db import getDB
+from auth import get_user, authenticate, set_user, clear
+from database import get_database_connection
 
 from textual.app import App, ComposeResult
 from textual.containers import Container, Vertical, Horizontal, ScrollableContainer
@@ -64,7 +64,7 @@ class ConfirmKickScreen(ModalScreen):
         
         :param self: Self that can use class attributes
         """
-        conn = await getDB()
+        conn = await get_database_connection()
         try:
             await conn.execute("""
                 DELETE FROM team_members
@@ -145,7 +145,7 @@ class LoginScreen(Screen):
             return
         
         if await authenticate(username, password):
-            setUser(username)
+            set_user(username)
             self.app.username = username
             await self.app.load_data()
             self.app.pop_screen()
@@ -242,8 +242,8 @@ class CreateTeamScreen(Screen):
             msg.update("Team number must be a number!")
             msg.styles.color = "red"
             return
-        creator = getUser()
-        conn = await getDB()
+        creator = get_user()
+        conn = await get_database_connection()
         try:
             await conn.execute("""
                 INSERT INTO teams (team_number, team_name, location, website, passcode, creator)
@@ -334,8 +334,8 @@ class JoinTeamScreen(Screen):
             msg.styles.color = "red"
             return
         
-        username = getUser()
-        conn = await getDB()
+        username = get_user()
+        conn = await get_database_connection()
         
         try:
             team = await conn.fetchrow(
@@ -485,7 +485,7 @@ class ViewTeamScreen(Screen):
             await self.handle_request(request_id, False)
     
     async def handle_request(self, request_id: int, approved: bool):
-        conn = await getDB()
+        conn = await get_database_connection()
         try:
             req = await conn.fetchrow(
                 "SELECT * FROM join_requests WHERE id=$1", request_id
@@ -668,7 +668,7 @@ class MainApp(App):
     
     def on_mount(self) -> None:
         """Called when app is mounted"""
-        self.username = getUser()
+        self.username = get_user()
         if not self.username:
             self.push_screen(LoginScreen())
         else:
@@ -676,7 +676,7 @@ class MainApp(App):
     
     async def load_data(self):
         """Load the team's data via postgres"""
-        conn = await getDB()
+        conn = await get_database_connection()
         
         team = await conn.fetchrow("""
             SELECT t.team_number, t.team_name, t.location, t.website, t.creator
@@ -800,7 +800,7 @@ class MainApp(App):
         if not self.team_data:
             return
         
-        conn = await getDB()
+        conn = await get_database_connection()
         try:
             await conn.execute("""
                 DELETE FROM team_members

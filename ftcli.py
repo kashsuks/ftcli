@@ -1,7 +1,6 @@
 import typer
 import sys
 
-from auth import getUser
 
 from commands.stats import Stats
 from commands.approve import Approve
@@ -23,7 +22,6 @@ App.add_typer(CreateTeam().App, name="create-team")
         
 
 if __name__ == "__main__":
-    
     #if no arguments provided, launch TUI
     if len(sys.argv) == 1:
         from tui import MainApp

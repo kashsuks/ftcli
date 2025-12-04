@@ -1,8 +1,8 @@
 import typer
 import asyncio
 
-from db import getDB
-from auth import getUser
+from database import get_database_connection
+from auth import get_user
 
 class CreateTeam:
     def __init__(self):
@@ -17,7 +17,7 @@ class CreateTeam:
             passcode: str = typer.Option(None, prompt="Team Passcode", hide_input=True)
         ):
             
-            creator = getUser()
+            creator = get_user()
             if not creator:
                 print("You must be logged in to create a team")
                 return
@@ -27,7 +27,7 @@ class CreateTeam:
             )
 
     async def _new(self, team_number, team_name, location, website, passcode, creator):
-        conn = await getDB()
+        conn = await get_database_connection()
         
         try:
             await conn.execute("""

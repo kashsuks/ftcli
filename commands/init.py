@@ -1,6 +1,6 @@
 import typer
 import asyncio
-from db import init
+from database import init
 
 class Init:
     def __init__(self):
