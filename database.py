@@ -1,4 +1,4 @@
-import asyncpg # noqa
+import asyncpg # pylint: disable=import-error
 from utils.config import DB_URL
 
 async def get_database_connection():

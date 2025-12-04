@@ -1,11 +1,11 @@
-import asyncio # noqa
-import webbrowser # noqa
+import asyncio # pylint: disable=import-error
+import webbrowser # pylint: disable=import-error
 
-from textual.app import App, ComposeResult # noqa
-from textual.containers import Container, Vertical, Horizontal, ScrollableContainer # noqa
-from textual.widgets import Header, Footer, Button, Static, Label, Input # noqa
-from textual.screen import Screen, ModalScreen # noqa
-from textual import on # noqa
+from textual.app import App, ComposeResult # pylint: disable=import-error
+from textual.containers import Container, Vertical, Horizontal, ScrollableContainer # pylint: disable=import-error
+from textual.widgets import Header, Footer, Button, Static, Label, Input # pylint: disable=import-error
+from textual.screen import Screen, ModalScreen # pylint: disable=import-error
+from textual import on # pylint: disable=import-error
 
 from auth import get_user, authenticate, set_user, clear
 from database import get_database_connection

@@ -1,4 +1,4 @@
-import typer # noqa
+import typer # pylint: disable=import-error
 import sys
 
 

@@ -1,6 +1,6 @@
-import asyncio # noqa
-import bcrypt # noqa
-import typer # noqa
+import asyncio # pylint: disable=import-error
+import bcrypt # pylint: disable=import-error
+import typer # pylint: disable=import-error
 
 from database import get_database_connection
 
