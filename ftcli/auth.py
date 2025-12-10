@@ -2,7 +2,7 @@ import asyncio # pylint: disable=import-error
 import bcrypt # pylint: disable=import-error
 import typer # pylint: disable=import-error
 
-from database import get_database_connection
+from ftcli.database import get_database_connection
 
 async def hash(password: str) -> str:
     """Hashes a password using bcrypt

@@ -1,6 +1,6 @@
 import typer
 import asyncio
-from database import get_database_connection
+from ftcli.database import get_database_connection
 
 class Approve:
     """

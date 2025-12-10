@@ -1,5 +1,5 @@
 import asyncpg # pylint: disable=import-error
-from utils.config import DB_URL
+from ftcli.utils.config import DB_URL
 
 async def get_database_connection():
     """

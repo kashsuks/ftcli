@@ -1,8 +1,8 @@
 import typer
 import asyncio
 
-from database import get_database_connection
-from auth import get_user
+from ftcli.database import get_database_connection
+from ftcli.auth import get_user
 
 class JoinTeam:
     def __init__(self):

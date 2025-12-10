@@ -1,6 +1,6 @@
 import typer
 import asyncio
-from auth import create_user, authenticate, set_user, clear, get_user
+from ftcli.auth import create_user, authenticate, set_user, clear, get_user
 
 class Auth:
     """

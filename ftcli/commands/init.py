@@ -1,6 +1,6 @@
 import typer
 import asyncio
-from database import init
+from ftcli.database import init
 
 class Init:
     """

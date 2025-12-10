@@ -7,8 +7,8 @@ from textual.widgets import Header, Footer, Button, Static, Label, Input
 from textual.screen import Screen, ModalScreen
 from textual import on
 
-from auth import get_user, authenticate, set_user, clear
-from database import get_database_connection
+from ftcli.auth import get_user, authenticate, set_user, clear
+from ftcli.database import get_database_connection
 
 class ConfirmKickScreen(ModalScreen):
     """

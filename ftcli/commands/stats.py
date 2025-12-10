@@ -1,8 +1,8 @@
 import typer
 import asyncio
-from database import get_database_connection
-from auth import get_user
-from utils.ftc_scout import get_team
+from ftcli.database import get_database_connection
+from ftcli.auth import get_user
+from ftcli.utils.ftc_scout import get_team
 
 class Stats:
     def __init__(self):
