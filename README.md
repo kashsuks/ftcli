@@ -10,6 +10,8 @@ Cli (Command-Line Interface) for FTC teams
 
 ## Installation
 
+**Note:** This is possible only on Mac Silicon computers, if you would like to run on a different machine you would need to do a local deployement
+
 - Go to the [releases page](https://github.com/kashsuks/ftcli/releases)
 - Click on the most recent release
 - Download the file named `ftcli`
